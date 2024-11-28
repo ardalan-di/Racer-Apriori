@@ -1,1 +1,0 @@
-Statlog (Australian Credit Approval)
