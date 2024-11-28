@@ -5,8 +5,6 @@ from sklearn.metrics import accuracy_score
 from typing import Union
 import numpy as np
 from discretization import *
-from mlxtend.frequent_patterns import apriori, association_rules
-
 
 class RACERPreprocesser:
     def __init__(self, framework="numpy"):
@@ -401,60 +399,6 @@ class RACER:
 
     def _generalize_extants(self):
         """Generalize the extants by flipping every 0 to a 1 and checking if the fitness improves."""
-        # Step 1: Prepare Data with Class Labels
-        # Convert self._X and self._y into a DataFrame, including class labels as additional columns
-        feature_columns = [f'feature_{i}' for i in range(self._X.shape[1])]
-        class_columns = [f'class_{i}' for i in range(self._y.shape[1])]
-        
-        X_df = pd.DataFrame(self._X, columns=feature_columns)
-        y_df = pd.DataFrame(self._y, columns=class_columns)
-        combined_df = pd.concat([X_df, y_df], axis=1).astype(bool)
-
-        # Step 2: Generate Apriori frequent itemsets and association rules
-        frequent_itemsets = apriori(combined_df, min_support=0.1, use_colnames=True)
-        apriori_rules = association_rules(frequent_itemsets, metric="confidence", min_threshold=0)
-        
-        # Step 3: Separate IF and THEN Parts Using Class Labels in Consequents
-        apriori_if = []
-        apriori_then = []
-
-        for _, rule in apriori_rules.iterrows():
-
-            flag = False
-            for s in rule['antecedents']:
-                if 'class_' in s or len(rule['antecedents']) < 2:
-                    flag = True
-
-            for s in rule['consequents']:
-                if 'feature_' in s or len(rule['consequents']) != 1:
-                    flag = True
-
-            if flag == True:
-                continue
-
-            # Create binary vector for the IF part based on features
-            antecedent_binary = np.array([1 if feature in rule['antecedents'] else 0 for feature in feature_columns])
-            apriori_if.append(antecedent_binary)
-            
-            # Create binary vector for the THEN part based on class labels
-            consequent_binary = np.array([1 if feature in rule["consequents"] else 0 for feature in class_columns])
-            apriori_then.append(consequent_binary)
-             
-        new_extants_if = np.zeros_like(self._extants_if, dtype=bool)
-        for i in range(len(self._extants_if)):
-            for j in range(len(apriori_if)):
-                apriori_generalized = OR(self._extants_if[i],apriori_if[j])
-                fitness = self._fitness_fn(
-                    apriori_generalized, self._extants_then[i]
-                )
-                if fitness > self._fitnesses[i]:
-                    self._fitnesses[i] = fitness
-                else:
-                    apriori_generalized = self._extants_if[i]
-            new_extants_if[i] = apriori_generalized
-        self._extants_if = new_extants_if
-        
-
         new_extants_if = np.zeros_like(self._extants_if, dtype=bool)
         for i in range(len(self._extants_if)):
             for j in range(len(self._extants_if[i])):
