@@ -126,7 +126,7 @@ class RACER:
 
         self._X, self._y = X, y
 
-                # Step 1: Prepare Data with Class Labels
+        # Step 1: Prepare Data with Class Labels
         # Convert self._X and self._y into a DataFrame, including class labels as additional columns
         feature_columns = [f'feature_{i}' for i in range(self._X.shape[1])]
         class_columns = [f'class_{i}' for i in range(self._y.shape[1])]
@@ -136,7 +136,7 @@ class RACER:
         combined_df = pd.concat([X_df, y_df], axis=1).astype(bool)
 
         # Step 2: Generate Apriori frequent itemsets and association rules
-        frequent_itemsets = apriori(combined_df, min_support=0.4, use_colnames=True)
+        frequent_itemsets = apriori(combined_df, min_support=0.1, use_colnames=True)
         apriori_rules = association_rules(frequent_itemsets, metric="confidence", min_threshold=0)
         
         # Step 3: Separate IF and THEN Parts Using Class Labels in Consequents
@@ -164,16 +164,15 @@ class RACER:
             # Create binary vector for the THEN part based on class labels
             consequent_binary = np.array([1 if feature in rule["consequents"] else 0 for feature in class_columns])
             apriori_then.append(consequent_binary)
-            
-
+          
         # Step 4: Convert lists to numpy arrays
-        apriori_if = np.array(apriori_if)
-        apriori_then = np.array(apriori_then)
+        # apriori_if = np.array(apriori_if)
+        # apriori_then = np.array(apriori_then)
 
-        print("generated rule by apriori:",len(apriori_if))
-        if(len(apriori_if) > 0):
-            self._X = np.vstack([self._X, apriori_if])
-            self._y = np.vstack([self._y, apriori_then])
+        # print("generated rule by apriori:",len(apriori_if))
+        # if(len(apriori_if) > 0):
+        #     self._X = np.vstack([self._X, apriori_if])
+        #     self._y = np.vstack([self._y, apriori_then])
 
         self._cardinality, self._rule_len = self._X.shape
         self._classes = np.unique(self._y, axis=0)
@@ -181,7 +180,27 @@ class RACER:
             self._label_to_int(cls): np.where(np.min(XNOR(self._y, cls), axis=-1))[0]
             for cls in self._classes
         }
-        
+
+        high_quality_apriori_rules_if = []
+        high_quality_apriori_rules_then = []
+        for i in range(len(apriori_if)):
+            fitness = self._fitness_fn(
+                apriori_if[i], apriori_then[i]
+            )
+            if(fitness > 1):
+                # print('rule: ',apriori_if[i],'\t','then: ',apriori_then[i])                    
+                # print(fitness)
+                high_quality_apriori_rules_if.append(apriori_if[i]) 
+                high_quality_apriori_rules_then.append(apriori_then[i])  
+    
+        apriori_if = np.array(high_quality_apriori_rules_if)
+        apriori_then = np.array(high_quality_apriori_rules_then)
+
+        print("generated rule by apriori:",len(apriori_if))
+        if(len(apriori_if) > 0):
+            self._X = np.vstack([self._X, apriori_if])
+            self._y = np.vstack([self._y, apriori_then])
+
         self._create_init_rules()
 
         for cls in self._class_indices.keys():
