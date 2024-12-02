@@ -119,6 +119,8 @@ class RACER:
             X (np.ndarray): features vector
             y (np.ndarray): targets vector
         """
+        np.set_printoptions(threshold=np.inf)
+
         if self._benchmark:
             from time import perf_counter
 
@@ -136,18 +138,18 @@ class RACER:
         combined_df = pd.concat([X_df, y_df], axis=1).astype(bool)
 
         # Step 2: Generate Apriori frequent itemsets and association rules
-        frequent_itemsets = apriori(combined_df, min_support=0.1, use_colnames=True)
-        apriori_rules = association_rules(frequent_itemsets, metric="confidence", min_threshold=0)
-        
+        frequent_itemsets = apriori(combined_df, min_support=0.01, use_colnames=True)
+        apriori_rules = association_rules(frequent_itemsets, metric="confidence", support_only=True, min_threshold=0)
         # Step 3: Separate IF and THEN Parts Using Class Labels in Consequents
         apriori_if = []
         apriori_then = []
+
 
         for _, rule in apriori_rules.iterrows():
 
             flag = False
             for s in rule['antecedents']:
-                if 'class_' in s or len(rule['antecedents']) < 2:
+                if 'class_' in s or len(rule['antecedents']) < 1:
                     flag = True
 
             for s in rule['consequents']:
@@ -164,7 +166,7 @@ class RACER:
             # Create binary vector for the THEN part based on class labels
             consequent_binary = np.array([1 if feature in rule["consequents"] else 0 for feature in class_columns])
             apriori_then.append(consequent_binary)
-          
+
         # Step 4: Convert lists to numpy arrays
         # apriori_if = np.array(apriori_if)
         # apriori_then = np.array(apriori_then)
@@ -180,26 +182,24 @@ class RACER:
             self._label_to_int(cls): np.where(np.min(XNOR(self._y, cls), axis=-1))[0]
             for cls in self._classes
         }
-
+        print("apriori finished")
         high_quality_apriori_rules_if = []
         high_quality_apriori_rules_then = []
         for i in range(len(apriori_if)):
             fitness = self._fitness_fn(
                 apriori_if[i], apriori_then[i]
-            )
-            if(fitness > 1):
-                # print('rule: ',apriori_if[i],'\t','then: ',apriori_then[i])                    
-                # print(fitness)
+            )                    
+            if(fitness >= 0.4):
                 high_quality_apriori_rules_if.append(apriori_if[i]) 
                 high_quality_apriori_rules_then.append(apriori_then[i])  
-    
+
         apriori_if = np.array(high_quality_apriori_rules_if)
         apriori_then = np.array(high_quality_apriori_rules_then)
 
-        print("generated rule by apriori:",len(apriori_if))
-        if(len(apriori_if) > 0):
-            self._X = np.vstack([self._X, apriori_if])
-            self._y = np.vstack([self._y, apriori_then])
+        print("generated rule by apriori:",len(high_quality_apriori_rules_if))
+        if(len(high_quality_apriori_rules_if) > 0):
+            self._extants_if = apriori_if
+            self._extants_then = apriori_then
 
         self._create_init_rules()
 
@@ -382,13 +382,13 @@ class RACER:
 
     def _create_init_rules(self):
         """Creates an initial set of rules from the input feature vectors"""
-        self._extants_if = self._X.copy()
-        self._extants_then = self._y.copy()
-        self._extants_covered = np.zeros(len(self._X), dtype=bool)
+        self._extants_if = np.vstack([self._X, self._extants_if])
+        self._extants_then = np.vstack([self._y, self._extants_then])
+        self._extants_covered = np.zeros(len(self._extants_if), dtype=bool)
         self._fitnesses = np.array(
             [
                 self._fitness_fn(rule_if, rule_then)
-                for rule_if, rule_then in zip(self._X, self._y)
+                for rule_if, rule_then in zip(self._extants_if,self._extants_then)
             ]
         )
 
