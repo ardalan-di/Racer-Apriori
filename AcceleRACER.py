@@ -138,7 +138,7 @@ class RACER:
         combined_df = pd.concat([X_df, y_df], axis=1).astype(bool)
 
         # Step 2: Generate Apriori frequent itemsets and association rules
-        frequent_itemsets = apriori(combined_df, min_support=0.01, use_colnames=True)
+        frequent_itemsets = apriori(combined_df, min_support=0.1, use_colnames=True)
         apriori_rules = association_rules(frequent_itemsets, metric="confidence", support_only=True, min_threshold=0)
         # Step 3: Separate IF and THEN Parts Using Class Labels in Consequents
         apriori_if = []
@@ -189,7 +189,7 @@ class RACER:
             fitness = self._fitness_fn(
                 apriori_if[i], apriori_then[i]
             )                    
-            if(fitness >= 0.4):
+            if(fitness >= 0.2):
                 high_quality_apriori_rules_if.append(apriori_if[i]) 
                 high_quality_apriori_rules_then.append(apriori_then[i])  
 
@@ -382,8 +382,12 @@ class RACER:
 
     def _create_init_rules(self):
         """Creates an initial set of rules from the input feature vectors"""
-        self._extants_if = np.vstack([self._X, self._extants_if])
-        self._extants_then = np.vstack([self._y, self._extants_then])
+        if(hasattr(self,'_extants_if')):
+            self._extants_if = np.vstack([self._X, self._extants_if])
+            self._extants_then = np.vstack([self._y, self._extants_then])
+        else:
+            self._extants_if = self._X
+            self._extants_then = self._y 
         self._extants_covered = np.zeros(len(self._extants_if), dtype=bool)
         self._fitnesses = np.array(
             [
