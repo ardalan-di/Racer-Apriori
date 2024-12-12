@@ -34,7 +34,7 @@ def run(path):
 
         print("run {0}:".format(i));
         print("accuracy : {0}".format(score));
-        print("numer of rules : {0}".format(rules));
+        print("number of rules : {0}".format(rules));
         print("\n");
         
 
