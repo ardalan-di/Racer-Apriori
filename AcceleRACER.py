@@ -128,6 +128,13 @@ class RACER:
 
         self._X, self._y = X, y
 
+        self._cardinality, self._rule_len = self._X.shape
+        self._classes = np.unique(self._y, axis=0)
+        self._class_indices = {
+            self._label_to_int(cls): np.where(np.min(XNOR(self._y, cls), axis=-1))[0]
+            for cls in self._classes
+        }
+        
         # Step 1: Prepare Data with Class Labels
         # Convert self._X and self._y into a DataFrame, including class labels as additional columns
         feature_columns = [f'feature_{i}' for i in range(self._X.shape[1])]
@@ -167,22 +174,8 @@ class RACER:
             consequent_binary = np.array([1 if feature in rule["consequents"] else 0 for feature in class_columns])
             apriori_then.append(consequent_binary)
 
-        # Step 4: Convert lists to numpy arrays
-        # apriori_if = np.array(apriori_if)
-        # apriori_then = np.array(apriori_then)
-
-        # print("generated rule by apriori:",len(apriori_if))
-        # if(len(apriori_if) > 0):
-        #     self._X = np.vstack([self._X, apriori_if])
-        #     self._y = np.vstack([self._y, apriori_then])
-
-        self._cardinality, self._rule_len = self._X.shape
-        self._classes = np.unique(self._y, axis=0)
-        self._class_indices = {
-            self._label_to_int(cls): np.where(np.min(XNOR(self._y, cls), axis=-1))[0]
-            for cls in self._classes
-        }
         print("apriori finished")
+
         high_quality_apriori_rules_if = []
         high_quality_apriori_rules_then = []
         for i in range(len(apriori_if)):
@@ -200,6 +193,7 @@ class RACER:
         if(len(high_quality_apriori_rules_if) > 0):
             self._X = np.vstack([self._X, apriori_if])
             self._y = np.vstack([self._y, apriori_then])
+            
             self._cardinality, self._rule_len = self._X.shape
             self._classes = np.unique(self._y, axis=0)
             self._class_indices = {
