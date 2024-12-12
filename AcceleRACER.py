@@ -156,12 +156,22 @@ class RACER:
             apriori_if = []
             apriori_then = []
 
+            print("almost finished")
+            seen_rules = set()
+
             for _, rule in apriori_rules_class.iterrows():
+                # Create the binary vector for antecedents and consequents
                 antecedent_binary = np.array([1 if (feature in rule['antecedents'] or feature in rule["consequents"]) else 0 for feature in feature_columns])
-                if(not any(np.array_equal(array, antecedent_binary) for array in apriori_if)):
+
+                # Convert the binary array to a tuple for efficient hashing and comparison
+                antecedent_tuple = tuple(antecedent_binary)
+
+                # Check if the tuple is already in the set
+                if antecedent_tuple not in seen_rules:
                     apriori_if.append(antecedent_binary)
                     apriori_then.append(self._y[class_indices][0])
-            
+                    seen_rules.add(antecedent_tuple)  # Add the new rule to the set
+                    
             print("apriori finished")
 
             high_quality_apriori_rules_if = []
@@ -179,21 +189,17 @@ class RACER:
 
             print("generated rule by apriori:",len(high_quality_apriori_rules_if))
             if(len(high_quality_apriori_rules_if) > 0):
-                 if(hasattr(self,'_extants_if')):
-                    self._extants_if = np.vstack([apriori_if, self._extants_if])
-                    self._extants_then = np.vstack([apriori_then, self._extants_then])
-                 else:
-                    self._extants_if = apriori_if
-                    self._extants_then = apriori_then
+                self._X = np.vstack([self._X, apriori_if])
+                self._y = np.vstack([self._y, apriori_then])
+                
+                self._cardinality, self._rule_len = self._X.shape
+                self._classes = np.unique(self._y, axis=0)
+                self._class_indices = {
+                self._label_to_int(cls): np.where(np.min(XNOR(self._y, cls), axis=-1))[0]
+                for cls in self._classes
+                }
 
         self._create_init_rules()
-
-        self._cardinality, self._rule_len = self._X.shape
-        self._classes = np.unique(self._y, axis=0)
-        self._class_indices = {
-            self._label_to_int(cls): np.where(np.min(XNOR(self._y, cls), axis=-1))[0]
-            for cls in self._classes
-        }
 
         for cls in self._class_indices.keys():
             indices = self._class_indices[cls]
