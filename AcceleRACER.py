@@ -138,7 +138,7 @@ class RACER:
         combined_df = pd.concat([X_df, y_df], axis=1).astype(bool)
 
         # Step 2: Generate Apriori frequent itemsets and association rules
-        frequent_itemsets = apriori(combined_df, min_support=0.01, use_colnames=True)
+        frequent_itemsets = apriori(combined_df, min_support=0.001, use_colnames=True)
         apriori_rules = association_rules(frequent_itemsets, metric="confidence", support_only=True, min_threshold=0)
         # Step 3: Separate IF and THEN Parts Using Class Labels in Consequents
         apriori_if = []
@@ -167,15 +167,6 @@ class RACER:
             consequent_binary = np.array([1 if feature in rule["consequents"] else 0 for feature in class_columns])
             apriori_then.append(consequent_binary)
 
-        # Step 4: Convert lists to numpy arrays
-        # apriori_if = np.array(apriori_if)
-        # apriori_then = np.array(apriori_then)
-
-        # print("generated rule by apriori:",len(apriori_if))
-        # if(len(apriori_if) > 0):
-        #     self._X = np.vstack([self._X, apriori_if])
-        #     self._y = np.vstack([self._y, apriori_then])
-
         self._cardinality, self._rule_len = self._X.shape
         self._classes = np.unique(self._y, axis=0)
         self._class_indices = {
@@ -200,6 +191,7 @@ class RACER:
         if(len(high_quality_apriori_rules_if) > 0):
             self._extants_if = apriori_if
             self._extants_then = apriori_then
+
 
         self._create_init_rules()
 
@@ -297,7 +289,7 @@ class RACER:
         # coverage := count of covered bits by a rule. Higher is better.
         int_X = X.astype(int)  # <- cast boolean array to integer array
         overlap = OR(NOT(int_X), AND(self._final_rules_if, int_X)).sum(axis=-1)
-        overlap = overlap / self._rule_len  # -> normalize by rule length
+        overlap = overlap / self._X.shape[1]  # -> normalize by rule length
         scores = np.multiply(self._gamma * overlap, (1 - self._gamma) * self._fitnesses)
         argmax = np.argmax(scores)
         return self._final_rules_then[argmax]
@@ -329,7 +321,7 @@ class RACER:
         """
         n_covered, n_correct = self._confusion(rule_if, rule_then)
         accuracy = n_correct / n_covered
-        coverage = n_covered / self._cardinality
+        coverage = n_covered / self._X.shape[0]
         return self._alpha * accuracy + self._beta * coverage
 
     def _fitness_f_beta(self, rule_if: np.ndarray, rule_then: np.ndarray) -> np.ndarray:
@@ -345,7 +337,7 @@ class RACER:
         beta = self._beta / self._alpha
         n_covered, n_correct = self._confusion(rule_if, rule_then)
         accuracy = n_correct / n_covered
-        coverage = n_covered / self._cardinality
+        coverage = n_covered / self._X.shape[0]
         return (
             (1 + beta**2) * (accuracy * coverage) / (beta**2 * accuracy + coverage)
         )
@@ -385,9 +377,16 @@ class RACER:
         if(hasattr(self,'_extants_if')):
             self._extants_if = np.vstack([self._X, self._extants_if])
             self._extants_then = np.vstack([self._y, self._extants_then])
+            self._cardinality, self._rule_len = self._extants_if.shape
+            self._classes = np.unique(self._extants_then, axis=0)
+            self._class_indices = {
+            self._label_to_int(cls): np.where(np.min(XNOR(self._extants_then, cls), axis=-1))[0]
+            for cls in self._classes
+            }
         else:
             self._extants_if = self._X.copy()
             self._extants_then = self._y .copy()
+
         self._extants_covered = np.zeros(len(self._extants_if), dtype=bool)
         self._fitnesses = np.array(
             [
