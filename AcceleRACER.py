@@ -6,6 +6,7 @@ from typing import Union
 import numpy as np
 from discretization import *
 from mlxtend.frequent_patterns import apriori, association_rules
+import warnings
 
 
 
@@ -139,6 +140,8 @@ class RACER:
         # Convert self._X and self._y into a DataFrame, including class labels as additional columns
         feature_columns = [f'feature_{i}' for i in range(self._X.shape[1])]
     
+        warnings.filterwarnings("ignore", category=DeprecationWarning, module="mlxtend")
+
         for cls in self._class_indices.keys():
             class_indices = self._class_indices[cls]
             
@@ -154,8 +157,9 @@ class RACER:
 
             for _, rule in apriori_rules_class.iterrows():
                 antecedent_binary = np.array([1 if (feature in rule['antecedents'] or feature in rule["consequents"]) else 0 for feature in feature_columns])
-                apriori_if.append(antecedent_binary)
-                apriori_then.append(self._y[class_indices][0])
+                if(not any(np.array_equal(array, antecedent_binary) for array in apriori_if)):
+                    apriori_if.append(antecedent_binary)
+                    apriori_then.append(self._y[class_indices][0])
             
             print("apriori finished")
 
@@ -277,7 +281,7 @@ class RACER:
         # coverage := count of covered bits by a rule. Higher is better.
         int_X = X.astype(int)  # <- cast boolean array to integer array
         overlap = OR(NOT(int_X), AND(self._final_rules_if, int_X)).sum(axis=-1)
-        overlap = overlap / self._rule_len  # -> normalize by rule length
+        overlap = overlap / self._X.shape[1]  # -> normalize by rule length
         scores = np.multiply(self._gamma * overlap, (1 - self._gamma) * self._fitnesses)
         argmax = np.argmax(scores)
         return self._final_rules_then[argmax]
@@ -309,7 +313,7 @@ class RACER:
         """
         n_covered, n_correct = self._confusion(rule_if, rule_then)
         accuracy = n_correct / n_covered
-        coverage = n_covered / self._cardinality
+        coverage = n_covered / self._X.shape[0]
         return self._alpha * accuracy + self._beta * coverage
 
     def _fitness_f_beta(self, rule_if: np.ndarray, rule_then: np.ndarray) -> np.ndarray:
@@ -325,7 +329,7 @@ class RACER:
         beta = self._beta / self._alpha
         n_covered, n_correct = self._confusion(rule_if, rule_then)
         accuracy = n_correct / n_covered
-        coverage = n_covered / self._cardinality
+        coverage = n_covered / self._X.shape[0]
         return (
             (1 + beta**2) * (accuracy * coverage) / (beta**2 * accuracy + coverage)
         )
@@ -365,9 +369,16 @@ class RACER:
         if(hasattr(self,'_extants_if')):
             self._extants_if = np.vstack([self._X, self._extants_if])
             self._extants_then = np.vstack([self._y, self._extants_then])
+            self._cardinality, self._rule_len = self._extants_if.shape
+            self._classes = np.unique(self._extants_then, axis=0)
+            self._class_indices = {
+            self._label_to_int(cls): np.where(np.min(XNOR(self._extants_then, cls), axis=-1))[0]
+            for cls in self._classes
+            }
         else:
             self._extants_if = self._X.copy()
             self._extants_then = self._y .copy()
+
         self._extants_covered = np.zeros(len(self._extants_if), dtype=bool)
         self._fitnesses = np.array(
             [
