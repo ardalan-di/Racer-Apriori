@@ -143,6 +143,7 @@ class RACER:
         warnings.filterwarnings("ignore", category=DeprecationWarning, module="mlxtend")
 
         for cls in self._class_indices.keys():
+            print("hello")
             class_indices = self._class_indices[cls]
             
             X_class = self._X[class_indices]
@@ -169,7 +170,7 @@ class RACER:
                 fitness = self._fitness_fn(
                     apriori_if[i], apriori_then[i]
                 )                    
-                if(fitness >= 0.5):
+                if(fitness >= 0.4):
                     high_quality_apriori_rules_if.append(apriori_if[i]) 
                     high_quality_apriori_rules_then.append(apriori_then[i])  
 
@@ -186,6 +187,13 @@ class RACER:
                     self._extants_then = apriori_then
 
         self._create_init_rules()
+
+        self._cardinality, self._rule_len = self._X.shape
+        self._classes = np.unique(self._y, axis=0)
+        self._class_indices = {
+            self._label_to_int(cls): np.where(np.min(XNOR(self._y, cls), axis=-1))[0]
+            for cls in self._classes
+        }
 
         for cls in self._class_indices.keys():
             indices = self._class_indices[cls]
