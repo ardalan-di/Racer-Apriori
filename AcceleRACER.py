@@ -200,6 +200,12 @@ class RACER:
         if(len(high_quality_apriori_rules_if) > 0):
             self._X = np.vstack([self._X, apriori_if])
             self._y = np.vstack([self._y, apriori_then])
+            self._cardinality, self._rule_len = self._X.shape
+            self._classes = np.unique(self._y, axis=0)
+            self._class_indices = {
+            self._label_to_int(cls): np.where(np.min(XNOR(self._y, cls), axis=-1))[0]
+            for cls in self._classes
+            }
 
         self._create_init_rules()
 
