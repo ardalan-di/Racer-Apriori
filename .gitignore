@@ -1,3 +1,5 @@
 
 __pycache__/AcceleRACER.cpython-38.pyc
 *.pyc
+*.pyc
+/__pycache__
