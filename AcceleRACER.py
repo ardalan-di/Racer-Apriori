@@ -138,7 +138,7 @@ class RACER:
         combined_df = pd.concat([X_df, y_df], axis=1).astype(bool)
 
         # Step 2: Generate Apriori frequent itemsets and association rules
-        frequent_itemsets = apriori(combined_df, min_support=0.001, use_colnames=True)
+        frequent_itemsets = apriori(combined_df, min_support=0.01, use_colnames=True)
         apriori_rules = association_rules(frequent_itemsets, metric="confidence", support_only=True, min_threshold=0)
         # Step 3: Separate IF and THEN Parts Using Class Labels in Consequents
         apriori_if = []
@@ -180,7 +180,7 @@ class RACER:
             fitness = self._fitness_fn(
                 apriori_if[i], apriori_then[i]
             )                    
-            if(fitness >= 0.5):
+            if(fitness >= 0.4):
                 high_quality_apriori_rules_if.append(apriori_if[i]) 
                 high_quality_apriori_rules_then.append(apriori_then[i])  
 
@@ -194,6 +194,13 @@ class RACER:
 
 
         self._create_init_rules()
+
+        self._cardinality, self._rule_len = self._extants_if.shape
+        self._classes = np.unique(self._extants_then, axis=0)
+        self._class_indices = {
+        self._label_to_int(cls): np.where(np.min(XNOR(self._extants_then, cls), axis=-1))[0]
+        for cls in self._classes
+        }
 
         for cls in self._class_indices.keys():
             indices = self._class_indices[cls]
@@ -377,12 +384,6 @@ class RACER:
         if(hasattr(self,'_extants_if')):
             self._extants_if = np.vstack([self._X, self._extants_if])
             self._extants_then = np.vstack([self._y, self._extants_then])
-            self._cardinality, self._rule_len = self._extants_if.shape
-            self._classes = np.unique(self._extants_then, axis=0)
-            self._class_indices = {
-            self._label_to_int(cls): np.where(np.min(XNOR(self._extants_then, cls), axis=-1))[0]
-            for cls in self._classes
-            }
         else:
             self._extants_if = self._X.copy()
             self._extants_then = self._y .copy()
