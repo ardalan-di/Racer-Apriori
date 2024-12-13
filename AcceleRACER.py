@@ -155,11 +155,20 @@ class RACER:
             apriori_if = []
             apriori_then = []
 
+            seen_rules = set()
+
             for _, rule in apriori_rules_class.iterrows():
+                # Create the binary vector for antecedents and consequents
                 antecedent_binary = np.array([1 if (feature in rule['antecedents'] or feature in rule["consequents"]) else 0 for feature in feature_columns])
-                if(not any(np.array_equal(array, antecedent_binary) for array in apriori_if)):
+
+                # Convert the binary array to a tuple for efficient hashing and comparison
+                antecedent_tuple = tuple(antecedent_binary)
+
+                # Check if the tuple is already in the set
+                if antecedent_tuple not in seen_rules:
                     apriori_if.append(antecedent_binary)
                     apriori_then.append(self._y[class_indices][0])
+                    seen_rules.add(antecedent_tuple)  # Add the new rule to the set
             
             print("apriori finished")
 
