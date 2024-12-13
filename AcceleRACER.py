@@ -143,20 +143,18 @@ class RACER:
         warnings.filterwarnings("ignore", category=DeprecationWarning, module="mlxtend")
 
         for cls in self._class_indices.keys():
-            print("hello")
             class_indices = self._class_indices[cls]
             
             X_class = self._X[class_indices]
             
             X_class_df = pd.DataFrame(X_class, columns=feature_columns)
 
-            frequent_itemsets_class = apriori(X_class_df, min_support=0.01, use_colnames=True)
+            frequent_itemsets_class = apriori(X_class_df, min_support=0.1, use_colnames=True)
             apriori_rules_class = association_rules(frequent_itemsets_class, metric="confidence", support_only=True, min_threshold=0)
 
             apriori_if = []
             apriori_then = []
 
-            print("almost finished")
             seen_rules = set()
 
             for _, rule in apriori_rules_class.iterrows():
@@ -171,7 +169,7 @@ class RACER:
                     apriori_if.append(antecedent_binary)
                     apriori_then.append(self._y[class_indices][0])
                     seen_rules.add(antecedent_tuple)  # Add the new rule to the set
-                    
+
             print("apriori finished")
 
             high_quality_apriori_rules_if = []
@@ -180,7 +178,7 @@ class RACER:
                 fitness = self._fitness_fn(
                     apriori_if[i], apriori_then[i]
                 )                    
-                if(fitness >= 0.4):
+                if(fitness >= 0.2):
                     high_quality_apriori_rules_if.append(apriori_if[i]) 
                     high_quality_apriori_rules_then.append(apriori_then[i])  
 
