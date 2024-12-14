@@ -169,7 +169,7 @@ class RACER:
                     apriori_if.append(antecedent_binary)
                     apriori_then.append(self._y[class_indices][0])
                     seen_rules.add(antecedent_tuple)  # Add the new rule to the set
-            
+
             print("apriori finished")
 
             high_quality_apriori_rules_if = []
@@ -290,7 +290,7 @@ class RACER:
         # coverage := count of covered bits by a rule. Higher is better.
         int_X = X.astype(int)  # <- cast boolean array to integer array
         overlap = OR(NOT(int_X), AND(self._final_rules_if, int_X)).sum(axis=-1)
-        overlap = overlap / self._X.shape[1]  # -> normalize by rule length
+        overlap = overlap / self._rule_len  # -> normalize by rule length
         scores = np.multiply(self._gamma * overlap, (1 - self._gamma) * self._fitnesses)
         argmax = np.argmax(scores)
         return self._final_rules_then[argmax]
