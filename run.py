@@ -47,9 +47,12 @@ def run(path):
 
 
 
-
-dbName = "Contraceptive Method Choice"
-filePath = "dataSet\\{0}\\{0}".format(dbName, dbName);   
+# Statlog (Australian Credit Approval)
+# Iris
+# Contraceptive Method Choice
+#car evaluation
+dbName = "car evaluation"
+filePath = "C:\\Users\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\dataSet\\{0}\\{0}".format(dbName, dbName);   
 run(filePath);
 
 
