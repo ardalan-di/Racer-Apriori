@@ -14,6 +14,8 @@ df = pd.DataFrame(data)
 
 df = df.applymap(lambda x: x.decode('utf-8') if isinstance(x, bytes) else x)
 
+df = df.sample(frac=1, random_state=42).reset_index(drop=True)
+
 # Separate features (X) and target (y)
 X = df.drop(columns=['Class'])
 y = df['Class']
