@@ -142,6 +142,10 @@ class RACER:
     
         warnings.filterwarnings("ignore", category=DeprecationWarning, module="mlxtend")
 
+        
+        high_quality_apriori_rules_if = []
+        high_quality_apriori_rules_then = []
+
         for cls in self._class_indices.keys():
             class_indices = self._class_indices[cls]
             
@@ -149,7 +153,7 @@ class RACER:
             
             X_class_df = pd.DataFrame(X_class, columns=feature_columns)
 
-            frequent_itemsets_class = apriori(X_class_df, min_support=0.1, use_colnames=True)
+            frequent_itemsets_class = apriori(X_class_df, min_support=0.01, use_colnames=True)
             apriori_rules_class = association_rules(frequent_itemsets_class, metric="confidence", support_only=True, min_threshold=0)
 
             apriori_if = []
@@ -172,23 +176,21 @@ class RACER:
 
             print("apriori finished")
 
-            high_quality_apriori_rules_if = []
-            high_quality_apriori_rules_then = []
             for i in range(len(apriori_if)):
                 fitness = self._fitness_fn(
                     apriori_if[i], apriori_then[i]
                 )                    
-                if(fitness >= 0.2):
+                if(fitness >= 0.3):
                     high_quality_apriori_rules_if.append(apriori_if[i]) 
                     high_quality_apriori_rules_then.append(apriori_then[i])  
 
-            apriori_if = np.array(high_quality_apriori_rules_if)
-            apriori_then = np.array(high_quality_apriori_rules_then)
+            # apriori_if = np.array(high_quality_apriori_rules_if)
+            # apriori_then = np.array(high_quality_apriori_rules_then)
 
-            print("generated rule by apriori:",len(high_quality_apriori_rules_if))
-            if(len(high_quality_apriori_rules_if) > 0):
-                self._X = np.vstack([self._X, apriori_if])
-                self._y = np.vstack([self._y, apriori_then])
+        print("generated rule by apriori:",len(high_quality_apriori_rules_if))
+        if(len(high_quality_apriori_rules_if) > 0):
+                self._X = np.vstack([self._X, np.array(high_quality_apriori_rules_if)])
+                self._y = np.vstack([self._y, np.array(high_quality_apriori_rules_then)])
                 
                 self._cardinality, self._rule_len = self._X.shape
                 self._classes = np.unique(self._y, axis=0)
