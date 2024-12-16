@@ -1,0 +1,29 @@
+@relation car
+
+@attribute V1 {high, med, low, vhigh}
+@attribute V2 {high, low, vhigh, med}
+@attribute V3 {4, 2, 5more, 3}
+@attribute V4 {2, 4, more}
+@attribute V5 {med, big, small}
+@attribute V6 {high, med, low}
+@attribute class {unacc, acc, good, vgood}
+
+@data
+med,vhigh,5more,4,big,low,unacc
+high,low,3,more,med,low,unacc
+med,med,4,more,small,low,unacc
+vhigh,vhigh,4,4,small,med,unacc
+med,high,5more,4,small,high,acc
+high,low,4,2,med,high,unacc
+med,high,2,more,med,high,acc
+vhigh,high,5more,4,med,low,unacc
+vhigh,low,4,more,med,high,acc
+med,high,3,more,big,high,acc
+vhigh,vhigh,3,2,big,med,unacc
+vhigh,med,5more,more,small,low,unacc
+high,low,5more,2,med,low,unacc
+med,low,4,more,big,med,good
+high,vhigh,4,more,big,low,unacc
+high,low,3,more,med,med,acc
+vhigh,high,2,more,med,med,unacc
+high,vhigh,3,2,big,med,unacc
