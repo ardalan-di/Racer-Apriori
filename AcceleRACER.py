@@ -8,6 +8,7 @@ from discretization import *
 from mlxtend.frequent_patterns import apriori, association_rules
 
 
+
 class RACERPreprocesser:
     def __init__(self, framework="numpy"):
         assert framework in [
@@ -118,18 +119,81 @@ class RACER:
             X (np.ndarray): features vector
             y (np.ndarray): targets vector
         """
+        np.set_printoptions(threshold=np.inf)
+
         if self._benchmark:
             from time import perf_counter
 
             tic = perf_counter()
 
         self._X, self._y = X, y
+
         self._cardinality, self._rule_len = self._X.shape
         self._classes = np.unique(self._y, axis=0)
         self._class_indices = {
             self._label_to_int(cls): np.where(np.min(XNOR(self._y, cls), axis=-1))[0]
             for cls in self._classes
         }
+        
+        # Step 1: Prepare Data with Class Labels
+        # Convert self._X and self._y into a DataFrame, including class labels as additional columns
+        feature_columns = [f'feature_{i}' for i in range(self._X.shape[1])]
+        class_columns = [f'class_{i}' for i in range(self._y.shape[1])]
+        
+        X_df = pd.DataFrame(self._X, columns=feature_columns)
+        y_df = pd.DataFrame(self._y, columns=class_columns)
+        combined_df = pd.concat([X_df, y_df], axis=1).astype(bool)
+
+        # Step 2: Generate Apriori frequent itemsets and association rules
+        frequent_itemsets = apriori(combined_df, min_support=0.0001, use_colnames=True)
+        apriori_rules = association_rules(frequent_itemsets, metric="confidence", support_only=True, min_threshold=0)
+        # Step 3: Separate IF and THEN Parts Using Class Labels in Consequents
+        apriori_if = []
+        apriori_then = []
+
+
+        for _, rule in apriori_rules.iterrows():
+
+            flag = False
+            for s in rule['antecedents']:
+                if 'class_' in s or len(rule['antecedents']) < 1:
+                    flag = True
+
+            for s in rule['consequents']:
+                if 'feature_' in s or len(rule['consequents']) != 1:
+                    flag = True
+
+            if flag == True:
+                continue
+
+            # Create binary vector for the IF part based on features
+            antecedent_binary = np.array([1 if feature in rule['antecedents'] else 0 for feature in feature_columns])
+            apriori_if.append(antecedent_binary)
+            
+            # Create binary vector for the THEN part based on class labels
+            consequent_binary = np.array([1 if feature in rule["consequents"] else 0 for feature in class_columns])
+            apriori_then.append(consequent_binary)
+
+        print("apriori finished")
+
+        high_quality_apriori_rules_if = []
+        high_quality_apriori_rules_then = []
+        for i in range(len(apriori_if)):
+            fitness = self._fitness_fn(
+                apriori_if[i], apriori_then[i]
+            )                    
+            if(fitness >= 0.5):
+                high_quality_apriori_rules_if.append(apriori_if[i]) 
+                high_quality_apriori_rules_then.append(apriori_then[i])  
+
+        apriori_if = np.array(high_quality_apriori_rules_if)
+        apriori_then = np.array(high_quality_apriori_rules_then)
+
+        print("generated rule by apriori:",len(high_quality_apriori_rules_if))
+        if(len(high_quality_apriori_rules_if) > 0):
+            self._X = np.vstack([self._X, apriori_if])
+            self._y = np.vstack([self._y, apriori_then])
+            
         self._create_init_rules()
 
         for cls in self._class_indices.keys():
@@ -401,60 +465,6 @@ class RACER:
 
     def _generalize_extants(self):
         """Generalize the extants by flipping every 0 to a 1 and checking if the fitness improves."""
-        # Step 1: Prepare Data with Class Labels
-        # Convert self._X and self._y into a DataFrame, including class labels as additional columns
-        feature_columns = [f'feature_{i}' for i in range(self._X.shape[1])]
-        class_columns = [f'class_{i}' for i in range(self._y.shape[1])]
-        
-        X_df = pd.DataFrame(self._X, columns=feature_columns)
-        y_df = pd.DataFrame(self._y, columns=class_columns)
-        combined_df = pd.concat([X_df, y_df], axis=1).astype(bool)
-
-        # Step 2: Generate Apriori frequent itemsets and association rules
-        frequent_itemsets = apriori(combined_df, min_support=0.1, use_colnames=True)
-        apriori_rules = association_rules(frequent_itemsets, metric="confidence", min_threshold=0)
-        
-        # Step 3: Separate IF and THEN Parts Using Class Labels in Consequents
-        apriori_if = []
-        apriori_then = []
-
-        for _, rule in apriori_rules.iterrows():
-
-            flag = False
-            for s in rule['antecedents']:
-                if 'class_' in s or len(rule['antecedents']) < 2:
-                    flag = True
-
-            for s in rule['consequents']:
-                if 'feature_' in s or len(rule['consequents']) != 1:
-                    flag = True
-
-            if flag == True:
-                continue
-
-            # Create binary vector for the IF part based on features
-            antecedent_binary = np.array([1 if feature in rule['antecedents'] else 0 for feature in feature_columns])
-            apriori_if.append(antecedent_binary)
-            
-            # Create binary vector for the THEN part based on class labels
-            consequent_binary = np.array([1 if feature in rule["consequents"] else 0 for feature in class_columns])
-            apriori_then.append(consequent_binary)
-             
-        new_extants_if = np.zeros_like(self._extants_if, dtype=bool)
-        for i in range(len(self._extants_if)):
-            for j in range(len(apriori_if)):
-                apriori_generalized = OR(self._extants_if[i],apriori_if[j])
-                fitness = self._fitness_fn(
-                    apriori_generalized, self._extants_then[i]
-                )
-                if fitness > self._fitnesses[i]:
-                    self._fitnesses[i] = fitness
-                else:
-                    apriori_generalized = self._extants_if[i]
-            new_extants_if[i] = apriori_generalized
-        self._extants_if = new_extants_if
-        
-
         new_extants_if = np.zeros_like(self._extants_if, dtype=bool)
         for i in range(len(self._extants_if)):
             for j in range(len(self._extants_if[i])):
