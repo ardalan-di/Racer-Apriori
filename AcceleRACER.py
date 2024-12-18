@@ -138,7 +138,7 @@ class RACER:
         combined_df = pd.concat([X_df, y_df], axis=1).astype(bool)
 
         # Step 2: Generate Apriori frequent itemsets and association rules
-        frequent_itemsets = apriori(combined_df, min_support=0.01, use_colnames=True)
+        frequent_itemsets = apriori(combined_df, min_support=0.1, use_colnames=True)
         apriori_rules = association_rules(frequent_itemsets, metric="confidence", support_only=True, min_threshold=0)
         # Step 3: Separate IF and THEN Parts Using Class Labels in Consequents
         apriori_if = []
@@ -173,14 +173,14 @@ class RACER:
             self._label_to_int(cls): np.where(np.min(XNOR(self._y, cls), axis=-1))[0]
             for cls in self._classes
         }
-        print("apriori finished")
+
         high_quality_apriori_rules_if = []
         high_quality_apriori_rules_then = []
         for i in range(len(apriori_if)):
             fitness = self._fitness_fn(
                 apriori_if[i], apriori_then[i]
             )                    
-            if(fitness >= 0.4):
+            if(fitness >= 0.6):
                 high_quality_apriori_rules_if.append(apriori_if[i]) 
                 high_quality_apriori_rules_then.append(apriori_then[i])  
 
