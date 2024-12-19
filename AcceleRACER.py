@@ -149,7 +149,7 @@ class RACER:
             
             X_class_df = pd.DataFrame(X_class, columns=feature_columns)
 
-            frequent_itemsets_class = apriori(X_class_df, min_support=0.01, use_colnames=True)
+            frequent_itemsets_class = apriori(X_class_df, min_support=0.001, use_colnames=True)
             apriori_rules_class = association_rules(frequent_itemsets_class, metric="confidence", support_only=True, min_threshold=0)
 
             apriori_if = []
@@ -178,7 +178,7 @@ class RACER:
                 fitness = self._fitness_fn(
                     apriori_if[i], apriori_then[i]
                 )                    
-                if(fitness >= 0.4):
+                if(fitness >= 0.5):
                     high_quality_apriori_rules_if.append(apriori_if[i]) 
                     high_quality_apriori_rules_then.append(apriori_then[i])  
 
@@ -195,6 +195,13 @@ class RACER:
                     self._extants_then = apriori_then
 
         self._create_init_rules()
+
+        self._cardinality, self._rule_len = self._extants_if.shape
+        self._classes = np.unique(self._extants_then, axis=0)
+        self._class_indices = {
+        self._label_to_int(cls): np.where(np.min(XNOR(self._extants_then, cls), axis=-1))[0]
+        for cls in self._classes
+        }
 
         for cls in self._class_indices.keys():
             indices = self._class_indices[cls]
@@ -378,12 +385,6 @@ class RACER:
         if(hasattr(self,'_extants_if')):
             self._extants_if = np.vstack([self._X, self._extants_if])
             self._extants_then = np.vstack([self._y, self._extants_then])
-            self._cardinality, self._rule_len = self._extants_if.shape
-            self._classes = np.unique(self._extants_then, axis=0)
-            self._class_indices = {
-            self._label_to_int(cls): np.where(np.min(XNOR(self._extants_then, cls), axis=-1))[0]
-            for cls in self._classes
-            }
         else:
             self._extants_if = self._X.copy()
             self._extants_then = self._y.copy()
