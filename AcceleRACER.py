@@ -153,7 +153,7 @@ class RACER:
             
             X_class_df = pd.DataFrame(X_class, columns=feature_columns)
 
-            frequent_itemsets_class = apriori(X_class_df, min_support=0.01, use_colnames=True)
+            frequent_itemsets_class = apriori(X_class_df, min_support=0.001, use_colnames=True)
             if frequent_itemsets_class.__len__() > 0:
                 apriori_rules_class = association_rules(frequent_itemsets_class, metric="confidence", support_only=True, min_threshold=0)
             else:
@@ -178,8 +178,6 @@ class RACER:
                     apriori_then.append(self._y[class_indices][0])
                     seen_rules.add(antecedent_tuple)  # Add the new rule to the set
 
-            print("apriori finished")
-
             max = 0
             for i in range(len(apriori_if)):
                 fitness = self._fitness_fn(
@@ -187,10 +185,9 @@ class RACER:
                 )
                 if fitness > max:
                     max = fitness                    
-                if(fitness >= 0.6):
+                if(fitness >= 0.7):
                     high_quality_apriori_rules_if.append(apriori_if[i]) 
                     high_quality_apriori_rules_then.append(apriori_then[i])  
-            # print("best fitnes: ",max)
 
         print("generated rule by apriori:",len(high_quality_apriori_rules_if))
         if(len(high_quality_apriori_rules_if) > 0):
