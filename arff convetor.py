@@ -5,7 +5,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 
 
-dbName = "car evaluation"
+dbName = "tic tac"
 filePath = "C:\\Users\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\dataSet\\{0}\\{0}.arff".format(dbName);  
 
 # Load the ARFF file into a DataFrame
@@ -53,10 +53,10 @@ for train_index, test_index in kf.split(X,y):
     
     with open("C:\\Users\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\dataSet\\{0}\\{0}\\fold-{2}\\train.arff".format(dbName,dbName,fold), 'w') as f:
         # Write ARFF header
-        f.write('@relation car\n\n')
+        f.write('@relation tic-tac\n\n')
         for col in X.columns:
             f.write(f'@attribute {col} {{' + ', '.join(X[col].unique().astype(str)) + '}\n')
-        f.write('@attribute class {unacc, acc, good, vgood}\n\n')
+        f.write('@attribute class {positive,negative}\n\n')
         f.write('@data\n')
         
         # Write data
@@ -66,10 +66,10 @@ for train_index, test_index in kf.split(X,y):
     # Save test data
     with open("C:\\Users\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\dataSet\\{0}\\{0}\\fold-{2}\\test.arff".format(dbName,dbName,fold), 'w') as f:
         # Write ARFF header
-        f.write('@relation car\n\n')
+        f.write('@relation tic-tac\n\n')
         for col in X.columns:
             f.write(f'@attribute {col} {{' + ', '.join(X[col].unique().astype(str)) + '}\n')
-        f.write('@attribute class {unacc, acc, good, vgood}\n\n')
+        f.write('@attribute class {positive,negative}\n\n')
         f.write('@data\n')
         
         # Write data
