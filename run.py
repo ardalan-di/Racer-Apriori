@@ -51,7 +51,8 @@ def run(path):
 # Iris
 # Contraceptive Method Choice
 # car evaluation
-dbName = "Contraceptive Method Choice"
+# tic tac
+dbName = "tic tac"
 filePath = "C:\\Users\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\dataSet\\{0}\\{0}".format(dbName, dbName);   
 run(filePath);
 
