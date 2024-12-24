@@ -182,7 +182,7 @@ class RACER:
             fitness = self._fitness_fn(
                 apriori_if[i], apriori_then[i]
             )                    
-            if(fitness >= 0.4):
+            if(fitness >= 0.5):
                 high_quality_apriori_rules_if.append(apriori_if[i]) 
                 high_quality_apriori_rules_then.append(apriori_then[i])  
 

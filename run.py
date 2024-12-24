@@ -34,7 +34,7 @@ def run(path):
 
         print("run {0}:".format(i));
         print("accuracy : {0}".format(score));
-        print("numer of rules : {0}".format(rules));
+        print("number of rules : {0}".format(rules));
         print("\n");
         
 
@@ -50,8 +50,9 @@ def run(path):
 # Statlog (Australian Credit Approval)
 # Iris
 # Contraceptive Method Choice
-#car evaluation
-dbName = "car evaluation"
+# car evaluation
+# tic tac
+dbName = "tic tac"
 filePath = "C:\\Users\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\dataSet\\{0}\\{0}".format(dbName, dbName);   
 run(filePath);
 
