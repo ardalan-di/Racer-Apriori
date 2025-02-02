@@ -187,6 +187,10 @@ class RACER:
         alpha=0.9,
         suppress_warnings=False,
         benchmark=False,
+        fitness_treshhold = 0.7,
+        support_treshhold = 0.1,
+        feature_train=False,
+        feature_class=False
     ):
         """Initialize the RACER class
 
@@ -199,6 +203,10 @@ class RACER:
         self._suppress_warnings = suppress_warnings
         self._benchmark = benchmark
         self._has_fit = False
+        self._feature_train = feature_train
+        self._feature_class = feature_class
+        self._fitness_treshhold = fitness_treshhold
+        self._support_treshhold = support_treshhold
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
         """Fits the RACER algorithm on top of input data X and targets y.
@@ -213,6 +221,8 @@ class RACER:
 
             tic = perf_counter()
 
+        np.set_printoptions(threshold=np.inf)
+
         self._X, self._y = X, y
         self._cardinality, self._rule_len = self._X.shape
         self._classes = np.unique(self._y, axis=0)
@@ -221,14 +231,20 @@ class RACER:
             for cls in self._classes
         }
 
-        print(self._X)
+        print(len(self._X))
 
-        apriori_merge(self,fitness_treshhold = 0.5, support_treshhold = 0.3)
+        self._apriori_merge(fitness_treshhold = self._fitness_treshhold, support_treshhold = self._support_treshhold)
 
-        print("lol")
-        print(self._X)
+        if (self._feature_train == True):
+            self._cardinality, self._rule_len = self._X.shape
+            self._classes = np.unique(self._y, axis=0)
+            self._class_indices = {
+            self._label_to_int(cls): np.where(XNOR(self._y, cls).min(axis=-1))[0]
+            for cls in self._classes
+            }
 
         self._create_init_rules()
+        print(len(self._extants_if))
 
         for cls in self._class_indices.keys():
             for i in range(len(self._class_indices[cls])):
@@ -261,12 +277,15 @@ class RACER:
 
         self._finalize_rules()
 
+        print(len(self._final_rules_if))
+
+
         self._has_fit = True
 
         if self._benchmark:
             self._bench_time = perf_counter() - tic
 
-    def apriori_merge(self, fitness_treshhold, support_treshhold):
+    def _apriori_merge(self, fitness_treshhold, support_treshhold):
         # Step 1: Prepare Data with Class Labels
         # Convert self._X and self._y into a DataFrame, including class labels as additional columns
         feature_columns = [f'feature_{i}' for i in range(self._X.shape[1])]
@@ -299,12 +318,13 @@ class RACER:
                 continue
 
             # Create binary vector for the IF part based on features
-            antecedent_binary = np.array([1 if feature in rule['antecedents'] else 0 for feature in feature_columns])
+            antecedent_binary = np.array([True if feature in rule['antecedents'] else False for feature in feature_columns])
             apriori_if.append(antecedent_binary)
             
             # Create binary vector for the THEN part based on class labels
-            consequent_binary = np.array([1 if feature in rule["consequents"] else 0 for feature in class_columns])
+            consequent_binary = np.array([True if feature in rule["consequents"] else False for feature in class_columns])
             apriori_then.append(consequent_binary)
+            
 
         print("apriori finished")
 
