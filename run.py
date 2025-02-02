@@ -15,7 +15,7 @@ def run(path):
         
         dataSet = pd.DataFrame(dataSet).values;        
         
-        preprocessor = RACERPreprocesser();        
+        preprocessor = RACERPreprocessor();        
         X, y = preprocessor.fit_transform(dataSet, dataTypes);        
         X_test = X[0:testData.shape[0], :];
         y_test = y[0:testData.shape[0], :];
