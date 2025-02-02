@@ -15,14 +15,14 @@ def run(path):
         
         dataSet = pd.DataFrame(dataSet).values;        
         
-        preprocessor = RACERPreprocesser();        
+        preprocessor = RACERPreprocessor();        
         X, y = preprocessor.fit_transform(dataSet, dataTypes);        
         X_test = X[0:testData.shape[0], :];
         y_test = y[0:testData.shape[0], :];
         X = X[testData.shape[0]:, :];
         y = y[testData.shape[0]:, :];        
         
-        racer = RACER(alpha = 0.95, gamma = 0.6, suppress_warnings = True);
+        racer = RACER(alpha = 0.998, gamma = 0.6, suppress_warnings = True);
         racer.fit(X,y);        
 
         racer.reduceRules();
@@ -52,7 +52,7 @@ def run(path):
 # Contraceptive Method Choice
 # car evaluation
 # tic tac
-dbName = "Contraceptive Method Choice"
+dbName = "car evaluation"
 filePath = "C:\\Users\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\dataSet\\{0}\\{0}".format(dbName, dbName);   
 run(filePath);
 
