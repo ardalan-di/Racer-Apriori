@@ -35,7 +35,7 @@ X, Y = RACERPreprocessor().fit_transform(X, Y)
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, random_state=1, test_size=0.1)
 
 # Initialize and train RACER
-racer = RACER(alpha=0.95,feature_class=True,feature_train=True,support_treshhold=0.1,fitness_treshhold=0.99,feature_no_fitness_change=False,suppress_warnings=False, benchmark=True)
+racer = RACER(alpha=0.95,feature_class=True,feature_train=True,support_treshhold=0.1,fitness_treshhold=0.99,suppress_warnings=False, benchmark=True)
 racer.fit(X_train, Y_train)
 
 # Print RACER model score

@@ -1,0 +1,24 @@
+@relation tic-tac
+
+@attribute V1 {o, b, x}
+@attribute V2 {o, b, x}
+@attribute V3 {o, b, x}
+@attribute V4 {b, x, o}
+@attribute V5 {x, o, b}
+@attribute V6 {x, b, o}
+@attribute V7 {x, b, o}
+@attribute V8 {o, b, x}
+@attribute V9 {x, o, b}
+@attribute class {positive,negative}
+
+@data
+o,x,x,b,o,x,o,b,x,positive
+b,x,x,o,x,o,x,o,b,positive
+b,o,o,x,x,x,x,o,b,positive
+o,b,b,x,x,x,o,b,b,positive
+o,b,b,x,x,x,o,o,x,positive
+o,o,x,o,x,o,x,x,x,positive
+o,x,x,b,o,x,o,x,o,negative
+x,x,o,o,x,x,o,o,x,positive
+o,b,o,x,x,x,x,o,b,positive
+x,x,x,o,x,b,b,o,o,positive
