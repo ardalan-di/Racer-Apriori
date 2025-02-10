@@ -191,7 +191,7 @@ class RACER:
         support_treshhold = 0.1,
         feature_train=False,
         feature_class=False,
-        feature_no_fitness_change=False
+        feature_apriori=True
     ):
         """Initialize the RACER class
 
@@ -208,7 +208,7 @@ class RACER:
         self._feature_class = feature_class
         self._fitness_treshhold = fitness_treshhold
         self._support_treshhold = support_treshhold
-        self._feature_no_fitness_change = feature_no_fitness_change
+        self._feature_apriori = feature_apriori
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
         """Fits the RACER algorithm on top of input data X and targets y.
@@ -233,9 +233,11 @@ class RACER:
             for cls in self._classes
         }
 
-        print(len(self._X))
+        # print(len(self._X))
 
-        self._apriori_merge(fitness_treshhold = self._fitness_treshhold, support_treshhold = self._support_treshhold)
+        apriori_counter = False
+        if(self._feature_apriori):
+            apriori_counter = self._apriori_merge(fitness_treshhold = self._fitness_treshhold, support_treshhold = self._support_treshhold)
 
         if (self._feature_train == True):
             self._cardinality, self._rule_len = self._X.shape
@@ -244,11 +246,10 @@ class RACER:
             self._label_to_int(cls): np.where(XNOR(self._y, cls).min(axis=-1))[0]
             for cls in self._classes
             }
-        # if (self._feature_no_fitness_change_train == True):
 
 
         self._create_init_rules()
-        print(len(self._extants_if))
+        # print(len(self._extants_if))
 
         for cls in self._class_indices.keys():
             for i in range(len(self._class_indices[cls])):
@@ -281,13 +282,15 @@ class RACER:
 
         self._finalize_rules()
 
-        print(len(self._final_rules_if))
+        # print(len(self._final_rules_if))
 
 
         self._has_fit = True
 
         if self._benchmark:
             self._bench_time = perf_counter() - tic
+
+        return apriori_counter
 
     def _apriori_merge(self, fitness_treshhold, support_treshhold):
 
@@ -296,7 +299,8 @@ class RACER:
         # Convert self._X and self._y into a DataFrame, including class labels as additional columns
         feature_columns = [f'feature_{i}' for i in range(self._X.shape[1])]
         class_columns = [f'class_{i}' for i in range(self._y.shape[1])]
-        
+        apriori_added_rule_counter = []
+
         if(self._feature_class == True):
             feature_columns = [f'feature_{i}' for i in range(self._X.shape[1])]
             
@@ -343,6 +347,7 @@ class RACER:
                         high_quality_apriori_rules_if.append(apriori_if[i]) 
                         high_quality_apriori_rules_then.append(apriori_then[i])  
                 print("generated rule by apriori:",len(high_quality_apriori_rules_if))
+                apriori_added_rule_counter.append(len(high_quality_apriori_rules_if))
                 
             if(len(high_quality_apriori_rules_if) > 0):
                     self._X = np.vstack([self._X, np.array(high_quality_apriori_rules_if)])
@@ -400,9 +405,12 @@ class RACER:
             apriori_then = np.array(high_quality_apriori_rules_then)
 
             print("generated rule by apriori:",len(high_quality_apriori_rules_if))
+            apriori_added_rule_counter.append(len(high_quality_apriori_rules_if))
             if(len(high_quality_apriori_rules_if) > 0):
                 self._X = np.vstack([self._X, apriori_if])
                 self._y = np.vstack([self._y, apriori_then])
+
+        return apriori_added_rule_counter
 
     def predict(self, X: np.ndarray, convert_dummies=True) -> np.ndarray:
         """Given input X, predict label using RACER
