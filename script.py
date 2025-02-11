@@ -1,96 +1,136 @@
-import pandas as pd
 from scipy.io import arff
-from sklearn.model_selection import train_test_split
-from AcceleRACER import RACER, RACERPreprocessor
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import KFold
+from Class import *
 import os
 from itertools import product
-from openpyxl import load_workbook
 
-# Base directory
-base_file = "C:\\Users\\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\dataSet\\"
-
-# List of ARFF file paths
-arff_files = [
-    base_file + "car evaluation\\car evaluation.arff",
-    base_file + "Iris\\iris.arff",
-    base_file + "tic tac\\tic tac.arff",
-    base_file + "Contraceptive Method Choice\\cmc.arff",
+# List of datasets to process
+datasets = [
+    "car evaluation",
+    "Iris",
+    # "Statlog (Australian Credit Approval)",
+    "Contraceptive Method Choice",
+    "tic tac"
 ]
 
-support_thresholds = [0.3, 0.2, 0.1, 0.01]
-fitness_thresholds = [0.9, 0.8, 0.7, 0.6, 0.5]
-alpha = 0.95
+# Different RACER configurations to test
+param_grid = {
+    "alpha": [0.95],  
+    "gamma": [0.6],  
+    "apriori": [True],  
+    "feature_train": [True, False],  
+    "feature_class": [True, False],  
+    "support_threshold": [0.1,0.01],  
+    "fitness_threshold": [0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90]
+}
 
-# Generate configurations dynamically
-configurations = [
-    {"alpha": alpha, "feature_apriori": False}
-] + [
-    {"alpha": alpha, "feature_apriori": fa, "feature_class": fc, "feature_train": ft, 
-     "support_treshhold": s, "fitness_treshhold": f}
-    for fa, fc, ft, s, f in product(
-        [True], [True, False], [True, False], support_thresholds, fitness_thresholds
-    )
+# Generate all combinations of parameters dynamically
+configs = [
+    dict(zip(param_grid.keys(), values)) 
+    for values in product(*param_grid.values())
 ]
+manual = {
+    "alpha": 0.90,
+    "gamma": 0.7,
+    "apriori": False,
+    "feature_train": False,
+    "feature_class": False,
+    "support_threshold": 0,
+    "fitness_threshold": 0
+}
 
-output_excel_path = base_file + "results.xlsx"
+configs.insert(0,manual)
 
-def append_to_excel(df, file_path, sheet_name="Results"):
-    """Appends a DataFrame to an existing Excel file or creates a new one."""
-    if os.path.exists(file_path):
-        # Load existing workbook
-        with pd.ExcelWriter(file_path, engine="openpyxl", mode="a", if_sheet_exists="overlay") as writer:
-            try:
-                # Load the existing sheet
-                existing_df = pd.read_excel(file_path, sheet_name=sheet_name)
-                # Append new data
-                new_df = pd.concat([existing_df, df], ignore_index=True)
-                # Overwrite the sheet
-                new_df.to_excel(writer, sheet_name=sheet_name, index=False)
-            except ValueError:
-                # If sheet doesn't exist, create a new one
-                df.to_excel(writer, sheet_name=sheet_name, index=False)
-    else:
-        # Create new Excel file if it doesn't exist
-        with pd.ExcelWriter(file_path, engine="openpyxl", mode="w") as writer:
-            df.to_excel(writer, sheet_name=sheet_name, index=False)
+# Output Excel file
+output_file = "RACER_Final_Results.xlsx"
 
-# Loop through each ARFF file
-for arff_file_path in arff_files:
-    data, meta = arff.loadarff(arff_file_path)
-    df = pd.DataFrame(data)
+# If file exists, load previous results to prevent overwriting
+if os.path.exists(output_file):
+    existing_df = pd.read_excel(output_file)
+    results_list = existing_df.values.tolist()  # Convert back to list
+else:
+    results_list = []
 
-    for col in df.select_dtypes([object]).columns:
-        df[col] = df[col].str.decode('utf-8')
+# Process each dataset with multiple configurations
+for dbName in datasets:
+    # try:
+        print(f"\nProcessing dataset: {dbName}...")
 
-    X = df.drop(columns=['Class']).astype('category')
-    Y = df[['Class']].astype('category')
+        # Load ARFF file
+        filePath = f"C:\\Users\\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\dataSet\\{dbName}\\{dbName}.arff"
+        data, meta = arff.loadarff(filePath)
+        dataTypes = meta.types()
+        dataSet = pd.DataFrame(data).values
 
-    # Apply RACERPreprocessor
-    X, Y = RACERPreprocessor().fit_transform(X, Y)
+        # Preprocess the dataset
+        preprocessor = RACERPreprocessor()
+        X, y = preprocessor.fit_transform(dataSet, dataTypes)
 
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, random_state=1, test_size=0.1)
+        # Cross-validation setup
+        n_splits1 = 10
+        kf = KFold(n_splits=n_splits1, random_state=1, shuffle=True)
 
-    # Process each configuration
-    for idx, config in enumerate(configurations, start=1):
-        try:
-            racer = RACER(**config)
-            apriori_results = racer.fit(X_train, Y_train)
-            score = racer.score(X_test, Y_test)
+        # Iterate over different configurations
+        for config in configs:
+            alpha = config["alpha"]
+            gamma = config["gamma"]
+            support_threshold = config["support_threshold"]
+            fitness_threshold = config["fitness_threshold"]
+            feature_apriori = config["apriori"]
+            feature_class = config["feature_class"]
+            feature_train = config["feature_train"]
 
-            result = {
-                "ARFF File": os.path.basename(arff_file_path),
-                **config,
-                "Apriori_results": apriori_results,
-                "Score": score,
-            }
+            total_accuracy = 0
+            total_numOfRules = 0
+            total_numOfAprioriRule = []
 
-            # Convert result to DataFrame and append to Excel
-            result_df = pd.DataFrame([result])
-            append_to_excel(result_df, output_excel_path)
+            for train_index, test_index in kf.split(X):
+                X_train, X_test = X[train_index], X[test_index]
+                Y_train, Y_test = y[train_index], y[test_index]
 
-            print(f"✅ Saved config {idx} for {os.path.basename(arff_file_path)}")
+                # Initialize and train RACER with the current configuration
+                racer = RACER(alpha=alpha, gamma=gamma, suppress_warnings=True,
+                              feature_apriori=feature_apriori,
+                              feature_class=feature_class, feature_train=feature_train,
+                              support_treshhold=support_threshold, fitness_treshhold=fitness_threshold)
+                
+                aprioriRules = racer.fit(X_train, Y_train)
+                racer.reduceRules()
 
-        except Exception as e:
-            print(f"❌ Error processing config {idx} for {os.path.basename(arff_file_path)}: {e}")
+                # Compute accuracy and number of rules
+                score = racer.score(X_test, Y_test)
+                rules = racer.getNumOfRules()
 
-print(f"\nResults saved to {output_excel_path}")
+                total_accuracy += score
+                total_numOfRules += rules
+
+                if(type(aprioriRules) != bool): 
+                    total_numOfAprioriRule.append(aprioriRules)
+                else:
+                     total_numOfAprioriRule.append([0])
+
+            # Store final averaged results for this configuration
+            avg_accuracy = total_accuracy / n_splits1
+            avg_rules = total_numOfRules / n_splits1
+            avg_apriori = [x / n_splits1 for x in list(map(sum, zip(*total_numOfAprioriRule)))]
+
+
+            results_list.append([dbName, alpha, gamma, feature_apriori,
+                                feature_class,feature_train, support_threshold,
+                                fitness_threshold, avg_accuracy, avg_rules, avg_apriori])
+
+            # print(f"Final Results for {dbName} (α={alpha}, γ={gamma}, sup={support_threshold}, fit={fitness_threshold}):")
+            # print(f"  - Average Accuracy: {avg_accuracy*100:.2f}%")
+            # print(f"  - Average Number of Rules: {avg_rules}\n")
+
+            # Convert results to DataFrame and save iteratively
+            df_results = pd.DataFrame(results_list, columns=["Dataset", "Alpha", "Gamma","feature_apriori","feature_class","feature_train", "Support Threshold", "Fitness Threshold", "Final Accuracy", "Final Number of Rules","avg_apriori"])
+            df_results.to_excel(output_file, index=False)
+            print(f"Results saved to {output_file}")
+
+    # except Exception as e:
+    #     print(f"Error processing {dbName}: {e}")
+
+print("\nAll datasets and configurations processed. Final results saved.")

@@ -147,14 +147,16 @@ class RACER:
         apriori_counter = False
         if(self._feature_apriori):
             apriori_counter = self._apriori_merge(fitness_treshhold = self._fitness_treshhold, support_treshhold = self._support_treshhold)
+            if (self._feature_train == True):
+                self._cardinality, self._rule_len = self._X.shape
+                self._classes = np.unique(self._y, axis=0)
+                self._class_indices = {
+                self._label_to_int(cls): np.where(XNOR(self._y, cls).min(axis=-1))[0]
+                for cls in self._classes
+            }
+            else:
+                self._cardinality, self._rule_len = self._X.shape
 
-        if (self._feature_train == True):
-            self._cardinality, self._rule_len = self._X.shape
-            self._classes = np.unique(self._y, axis=0)
-            self._class_indices = {
-            self._label_to_int(cls): np.where(XNOR(self._y, cls).min(axis=-1))[0]
-            for cls in self._classes
-        }
        
         self._create_init_rules() 
 
