@@ -8,7 +8,7 @@ from itertools import product
 
 # List of datasets to process
 datasets = [
-    "car evaluation",
+    # "car evaluation",
     "Iris",
     # "Statlog (Australian Credit Approval)",
     "Contraceptive Method Choice",
@@ -32,8 +32,8 @@ configs = [
     for values in product(*param_grid.values())
 ]
 manual = {
-    "alpha": 0.90,
-    "gamma": 0.7,
+    "alpha": 0.95,
+    "gamma": 0.6,
     "apriori": False,
     "feature_train": False,
     "feature_class": False,
