@@ -6,24 +6,39 @@ from Class import *
 import os
 from itertools import product
 
+
+
 # List of datasets to process
 datasets = [
-    # "car evaluation",
-    "Iris",
-    # "Statlog (Australian Credit Approval)",
-    "Contraceptive Method Choice",
-    "tic tac"
+    "1-chscase_vine1", "2-dbworld-bodies", "3-pyrim", "4-kidney", "5-analcatdata_asbestos",
+    "6-baskball", "7-analcatdata_chlamydia", "8-fertility", "9-molecular-biology_promoters",
+    "10-fruitfly", "11-mux6", "12-analcatdata_boxing2", "13-newton_hema", "14-lymph", "15-tae",
+    "16-analcatdata_wildcat", "17-servo", "18-parkinsons", "19-pwLinear", "20-cpu", "21-seeds",
+    "22-chatfield_4", "23-heart-statlog", "24-breastTumor", "25-heart-h", "26-cholesterol",
+    "27-cleveland", "28-haberman", "29-ecoli", "30-liver-disorders", "31-dermatology",
+    "32-braziltourism", "33-pbc", "34-vote", "35-thoracic-surgery", "36-threeOf9", "37-kc2",
+    "38-wdbc", "39-monks-problems-2", "40-eucalyptus", "41-diabetes", "42-stock", "43-tokyo1",
+    "44-xd6", "45-flare", "46-parity5_plus_5", "47-cmc", "48-kr-vs-kp", "49-led7", "50-nursery"
 ]
+
+# datasets = [
+  
+#     # "car evaluation",
+#     "Iris",
+#     # "Statlog (Australian Credit Approval)",
+#     "Contraceptive Method Choice",
+#     "tic tac"
+# ]
 
 # Different RACER configurations to test
 param_grid = {
-    "alpha": [0.95],  
+    "alpha": [0.99],  
     "gamma": [0.6],  
-    "apriori": [True],  
-    "feature_train": [True, False],  
-    "feature_class": [True, False],  
-    "support_threshold": [0.1,0.01],  
-    "fitness_threshold": [0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90]
+    "apriori": [False],  
+    "feature_train": [False],  
+    "feature_class": [False],  
+    "support_threshold": [0],  
+    "fitness_threshold": [0]
 }
 
 # Generate all combinations of parameters dynamically
@@ -41,10 +56,10 @@ manual = {
     "fitness_threshold": 0
 }
 
-configs.insert(0,manual)
+# configs.insert(0,manual)
 
 # Output Excel file
-output_file = "RACER_Final_Results.xlsx"
+output_file = "RACER_ALPHA.xlsx"
 
 # If file exists, load previous results to prevent overwriting
 if os.path.exists(output_file):
@@ -59,7 +74,7 @@ for dbName in datasets:
         print(f"\nProcessing dataset: {dbName}...")
 
         # Load ARFF file
-        filePath = f"C:\\Users\\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\dataSet\\{dbName}\\{dbName}.arff"
+        filePath = f"C:\\Users\\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\data\\{dbName}.arff"
         data, meta = arff.loadarff(filePath)
         dataTypes = meta.types()
         dataSet = pd.DataFrame(data).values

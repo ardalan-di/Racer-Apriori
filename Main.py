@@ -25,8 +25,9 @@ y = data_array[:,-1]  # Labels
 #  Contraceptive Method Choice
 #  car evaluation
 #  tic tac
-dbName = "car evaluation"
-filePath = "C:\\Users\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\dataSet\\{0}\\{0}.arff".format(dbName, dbName);   
+dbName = "31-dermatology"
+# filePath = "C:\\Users\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\dataSet\\{0}\\{0}.arff".format(dbName, dbName);   
+filePath = f"C:\\Users\\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\data\\{dbName}.arff"
 
 data, meta = arff.loadarff(filePath)
 dataTypes = meta.types();
@@ -43,7 +44,7 @@ for train_index, test_index in kf.split(X):
     X_train , X_test = X[train_index] , X[test_index]
     Y_train , Y_test = y[train_index] , y[test_index]
     racer = None
-    racer = RACER(alpha = 0.95, gamma = 0.6, suppress_warnings = True,
+    racer = RACER(alpha = 0.99, gamma = 0.6, suppress_warnings = True,
             feature_apriori=False,
             feature_class=True, feature_train=False,
             support_treshhold=0.1, fitness_treshhold=0.50

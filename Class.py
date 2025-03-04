@@ -160,7 +160,7 @@ class RACER:
        
         self._create_init_rules() 
 
-        self._generalize_extants()
+        # self._generalize_extants()
 
         for cls in self._class_indices.keys():
             indices = self._class_indices[cls]
