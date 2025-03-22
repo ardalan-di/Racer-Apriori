@@ -18,7 +18,8 @@ datasets = [
     "27-cleveland", "28-haberman", "29-ecoli", "30-liver-disorders", "31-dermatology",
     "32-braziltourism", "33-pbc", "34-vote", "35-thoracic-surgery", "36-threeOf9", "37-kc2",
     "38-wdbc", "39-monks-problems-2", "40-eucalyptus", "41-diabetes", "42-stock", "43-tokyo1",
-    "44-xd6", "45-flare", "46-parity5_plus_5", "47-cmc", "48-kr-vs-kp", "49-led7", "50-nursery"
+    "44-xd6", "45-flare", "46-parity5_plus_5", "47-cmc", "48-kr-vs-kp", "49-led7", "50-nursery",
+    "51-iris","52-tic-tac","53-car-evaluation"
 ]
 
 # datasets = [

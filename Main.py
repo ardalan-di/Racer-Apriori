@@ -25,9 +25,9 @@ y = data_array[:,-1]  # Labels
 #  Contraceptive Method Choice
 #  car evaluation
 #  tic tac
-dbName = "31-dermatology"
-# filePath = "C:\\Users\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\dataSet\\{0}\\{0}.arff".format(dbName, dbName);   
-filePath = f"C:\\Users\\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\data\\{dbName}.arff"
+dbName = "Iris"
+filePath = "C:\\Users\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\dataSet\\{0}\\{0}.arff".format(dbName, dbName);   
+# filePath = f"C:\\Users\\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\data\\{dbName}.arff"
 
 data, meta = arff.loadarff(filePath)
 dataTypes = meta.types();
