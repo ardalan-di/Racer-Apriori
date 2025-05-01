@@ -25,6 +25,7 @@ y = data_array[:,-1]  # Labels
 #  Contraceptive Method Choice
 #  car evaluation
 #  tic tac
+# dbName = "3-pyrim"
 dbName = "Iris"
 filePath = "C:\\Users\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\dataSet\\{0}\\{0}.arff".format(dbName, dbName);   
 # filePath = f"C:\\Users\\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\data\\{dbName}.arff"
@@ -45,9 +46,9 @@ for train_index, test_index in kf.split(X):
     Y_train , Y_test = y[train_index] , y[test_index]
     racer = None
     racer = RACER(alpha = 0.99, gamma = 0.6, suppress_warnings = True,
-            feature_apriori=False,
-            feature_class=True, feature_train=False,
-            support_treshhold=0.1, fitness_treshhold=0.50
+            feature_apriori=True,
+            feature_class=False, feature_train=True,
+            support_treshhold=0.01, fitness_treshhold=0.50
           );
     racer.fit(X_train, Y_train);
     racer.reduceRules();

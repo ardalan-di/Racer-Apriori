@@ -3,9 +3,8 @@ import pandas as pd
 from sklearn.metrics import accuracy_score
 from typing import Union
 import numpy as np
+from fim import apriori  
 from Discretization import *
-from mlxtend.frequent_patterns import apriori, association_rules
-
 
 class RACERPreprocessor:
     def __init__(self, framework="numpy"):
@@ -192,60 +191,52 @@ class RACER:
 
         return apriori_counter
 
+    def indices_to_boolean(self, transactions, n_columns):
+        boolean_array = np.zeros((len(transactions), n_columns), dtype=bool)
+        
+        for i, transaction in enumerate(transactions):
+            for item in transaction:
+                boolean_array[i, item] = True
+        
+        return boolean_array
+    
+    def zero_based_indexing(self,rule):
+        return [
+                [i for i, val in enumerate(row) if val]  # 0-based indexing
+                for row in rule
+            ]
+
+
     def _apriori_merge(self, fitness_treshhold, support_treshhold):
 
-
-        # Step 1: Prepare Data with Class Labels
-        # Convert self._X and self._y into a DataFrame, including class labels as additional columns
-        feature_columns = [f'feature_{i}' for i in range(self._X.shape[1])]
-        class_columns = [f'class_{i}' for i in range(self._y.shape[1])]
         apriori_added_rule_counter = []
 
+        high_quality_apriori_rules_if = []
+        high_quality_apriori_rules_then = []
+
         if(self._feature_class == True):
-            feature_columns = [f'feature_{i}' for i in range(self._X.shape[1])]
             
-            high_quality_apriori_rules_if = []
-            high_quality_apriori_rules_then = []
-
             for cls in self._class_indices.keys():
-                class_indices = self._class_indices[cls]
-                
+            
+                class_indices = self._class_indices[cls]                
                 X_class = self._X[class_indices]
+
+                transactions = self.zero_based_indexing(X_class) 
                 
-                X_class_df = pd.DataFrame(X_class, columns=feature_columns)
+                rules = apriori(transactions,supp=self._support_treshhold * 100,target='s',report='',conf=0,)
+                rules = self.indices_to_boolean(rules,self._X.shape[1])
 
-                frequent_itemsets_class = apriori(X_class_df, min_support=support_treshhold, use_colnames=True)
-                if frequent_itemsets_class.__len__() > 0:
-                    apriori_rules_class = association_rules(frequent_itemsets_class, metric="confidence", support_only=True, min_threshold=0)
-                else:
-                    print("didn't find rule with apriori")
-                    continue
-
-                apriori_if = []
+                apriori_if = rules
                 apriori_then = []
-
-                seen_rules = set()
-
-                for _, rule in apriori_rules_class.iterrows():
-                    # Create the binary vector for antecedents and consequents
-                    antecedent_binary = np.array([1 if (feature in rule['antecedents'] or feature in rule["consequents"]) else 0 for feature in feature_columns])
-
-                    # Convert the binary array to a tuple for efficient hashing and comparison
-                    antecedent_tuple = tuple(antecedent_binary)
-
-                    # Check if the tuple is already in the set
-                    if antecedent_tuple not in seen_rules:
-                        apriori_if.append(antecedent_binary)
-                        apriori_then.append(self._y[class_indices][0])
-                        seen_rules.add(antecedent_tuple)  # Add the new rule to the set
 
                 for i in range(len(apriori_if)):
                     fitness = self._fitness_fn(
-                        apriori_if[i], apriori_then[i]
+                        apriori_if[i],self._y[class_indices][0]
                     )                    
                     if(fitness >= fitness_treshhold):
                         high_quality_apriori_rules_if.append(apriori_if[i]) 
-                        high_quality_apriori_rules_then.append(apriori_then[i])  
+                        high_quality_apriori_rules_then.append(self._y[class_indices][0])
+
                 print("generated rule by apriori:",len(high_quality_apriori_rules_if))
                 apriori_added_rule_counter.append(len(high_quality_apriori_rules_if))
                 
@@ -254,45 +245,48 @@ class RACER:
                     self._y = np.vstack([self._y, np.array(high_quality_apriori_rules_then)])
         else:
 
-            X_df = pd.DataFrame(self._X, columns=feature_columns)
-            y_df = pd.DataFrame(self._y, columns=class_columns)
-            combined_df = pd.concat([X_df, y_df], axis=1).astype(bool)
+            transactions = self.zero_based_indexing(self._X)
+            classes =  self.zero_based_indexing(self._y)
 
-            # Step 2: Generate Apriori frequent itemsets and association rules
-            frequent_itemsets = apriori(combined_df, min_support=support_treshhold, use_colnames=True)
-            apriori_rules = association_rules(frequent_itemsets, metric="confidence", support_only=True, min_threshold=0)
-            # Step 3: Separate IF and THEN Parts Using Class Labels in Consequents
+            combined_transactions = []
+            for feat_tx, class_tx in zip(transactions, classes):
+                offset_classes = [self._X.shape[1] + c + 1 for c in class_tx]
+                combined_transactions.append(feat_tx + offset_classes)
+
+            rules = apriori(combined_transactions,supp=self._support_treshhold * 100,target='r',report='a',conf=0)
+        
             apriori_if = []
             apriori_then = []
 
+            for rule in rules:
+                consequent, antecedent = rule[:2]
+                
+                if consequent - self._X.shape[1] < 0:
+                    continue
 
-            for _, rule in apriori_rules.iterrows():
+                consequent -= self._X.shape[1] 
+                consequent = [consequent - 1]
 
                 flag = False
-                for s in rule['antecedents']:
-                    if 'class_' in s or len(rule['antecedents']) < 1:
+                for i in antecedent:
+                    if i >= self._X.shape[1]:
                         flag = True
-
-                for s in rule['consequents']:
-                    if 'feature_' in s or len(rule['consequents']) != 1:
-                        flag = True
+                        break
 
                 if flag == True:
                     continue
 
-                # Create binary vector for the IF part based on features
-                antecedent_binary = np.array([True if feature in rule['antecedents'] else False for feature in feature_columns])
-                apriori_if.append(antecedent_binary)
-                
-                # Create binary vector for the THEN part based on class labels
-                consequent_binary = np.array([True if feature in rule["consequents"] else False for feature in class_columns])
-                apriori_then.append(consequent_binary)
-                
+                feature_indices = [f for f in antecedent]
 
-            print("apriori finished")
+                antecedent_bool = self.indices_to_boolean([feature_indices], self._X.shape[1])[0]
+                consequent_bool = self.indices_to_boolean([consequent], self._y.shape[1])[0]
+
+                apriori_then.append(consequent_bool)
+                apriori_if.append(antecedent_bool)
 
             high_quality_apriori_rules_if = []
             high_quality_apriori_rules_then = []
+
             for i in range(len(apriori_if)):
                 fitness = self._fitness_fn(
                     apriori_if[i], apriori_then[i]
