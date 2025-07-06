@@ -157,9 +157,13 @@ class RACER:
                 self._cardinality, self._rule_len = self._X.shape
 
        
-        self._create_init_rules() 
+        self._create_init_rules()
 
-        # self._generalize_extants()
+        #To use ROPAC-M, uncomment the next line. You can only use one of the following lines at a time.
+        #self.MFZB(self._extants_if, self._extants_then)
+        self.LFZB(self._extants_if, self._extants_then) 
+
+        self._generalize_extants()
 
         for cls in self._class_indices.keys():
             indices = self._class_indices[cls]
@@ -306,7 +310,63 @@ class RACER:
 
         return apriori_added_rule_counter
 
-    
+    def MFZB(self, base_array, base_result):
+        # Count the number of 1s in each bit position across all rules
+        bit_counts = [sum(1 for rule in base_array if rule[i]) for i in range(len(base_array[0]))]
+
+        for i in range(len(base_array)):
+            temp_result = base_array[i]
+            temp_fitness = self._fitnesses[i]
+            false_indices = [idx for idx, value in enumerate(base_array[i]) if not value]
+
+            if not false_indices:
+                continue
+
+            # Sort the false indices based on the number of 1s in the corresponding bit position
+            sorted_indices = sorted(false_indices, key=lambda idx: bit_counts[idx], reverse=True)
+
+            for index in sorted_indices:
+                new_array = base_array[i].copy()
+                new_array[index] = True
+                fitness = self._fitness_fn(new_array, base_result[i])
+
+                if fitness > temp_fitness:
+                    temp_fitness = fitness
+                    temp_result = new_array
+                    break  # Stop iterating if a better fitness is found
+
+            self._extants_if[i] = temp_result
+            self._fitnesses[i] = temp_fitness
+
+    #This is the implementation of the rule optimization function in ROPAC-L
+    def LFZB(self, base_array, base_result):
+        # Count the number of 1s in each bit position across all rules
+        bit_counts = [sum(1 for rule in base_array if rule[i]) for i in range(len(base_array[0]))]
+
+        for i in range(len(base_array)):
+            temp_result = base_array[i]
+            temp_fitness = self._fitnesses[i]
+            false_indices = [idx for idx, value in enumerate(base_array[i]) if not value]
+
+            if not false_indices:
+                continue
+
+            # Sort the false indices based on the number of 1s in the corresponding bit position
+            sorted_indices = sorted(false_indices, key=lambda idx: bit_counts[idx])
+
+            for index in sorted_indices:
+                new_array = base_array[i].copy()
+                new_array[index] = True
+                fitness = self._fitness_fn(new_array, base_result[i])
+
+                if fitness > temp_fitness:
+                    temp_fitness = fitness
+                    temp_result = new_array
+                    break  # Stop iterating if a better fitness is found
+
+            self._extants_if[i] = temp_result
+            self._fitnesses[i] = temp_fitness
+      
 
     def predict(self, X: np.ndarray, convert_dummies=True) -> np.ndarray:
         """Given input X, predict label using RACER

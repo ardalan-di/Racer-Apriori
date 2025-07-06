@@ -7,20 +7,34 @@ import os
 from itertools import product
 
 
+    # "1-chscase_vine1", "2-dbworld-bodies", "3-pyrim", "4-kidney", "5-analcatdata_asbestos",
+    # "6-baskball", "7-analcatdata_chlamydia", "8-fertility", "9-molecular-biology_promoters",
+    # "10-fruitfly", "11-mux6", "12-analcatdata_boxing2", "13-newton_hema", "14-lymph", "15-tae",
+    # "16-analcatdata_wildcat", "17-servo", "18-parkinsons", "19-pwLinear", "20-cpu", "21-seeds",
+    # "22-chatfield_4", "23-heart-statlog", "24-breastTumor", "25-heart-h", "26-cholesterol",
+    # "27-cleveland", "28-haberman", "29-ecoli", "30-liver-disorders", "31-dermatology",
+    # "32-braziltourism", "33-pbc", "34-vote", "35-thoracic-surgery", "36-threeOf9", "37-kc2",
+    # "38-wdbc", "39-monks-problems-2", "40-eucalyptus", "41-diabetes", "42-stock", "43-tokyo1",
+    # "44-xd6", "45-flare", "46-parity5_plus_5", "47-cmc", "48-kr-vs-kp", "49-led7", "50-nursery",
+    # "51-iris","52-tic-tac","53-car-evaluation"
+
 
 # List of datasets to process
 datasets = [
-    "1-chscase_vine1", "2-dbworld-bodies", "3-pyrim", "4-kidney", "5-analcatdata_asbestos",
-    "6-baskball", "7-analcatdata_chlamydia", "8-fertility", "9-molecular-biology_promoters",
-    "10-fruitfly", "11-mux6", "12-analcatdata_boxing2", "13-newton_hema", "14-lymph", "15-tae",
-    "16-analcatdata_wildcat", "17-servo", "18-parkinsons", "19-pwLinear", "20-cpu", "21-seeds",
-    "22-chatfield_4", "23-heart-statlog", "24-breastTumor", "25-heart-h", "26-cholesterol",
-    "27-cleveland", "28-haberman", "29-ecoli", "30-liver-disorders", "31-dermatology",
-    "32-braziltourism", "33-pbc", "34-vote", "35-thoracic-surgery", "36-threeOf9", "37-kc2",
-    "38-wdbc", "39-monks-problems-2", "40-eucalyptus", "41-diabetes", "42-stock", "43-tokyo1",
-    "44-xd6", "45-flare", "46-parity5_plus_5", "47-cmc", "48-kr-vs-kp", "49-led7", "50-nursery",
-    "51-iris","52-tic-tac","53-car-evaluation"
+    "1-chscase_vine1", "4-kidney", "5-analcatdata_asbestos",
+    "6-baskball", "7-analcatdata_chlamydia",
+    "10-fruitfly", "11-mux6", "12-analcatdata_boxing2", "13-newton_hema", "15-tae",
+    "16-analcatdata_wildcat", "17-servo", "20-cpu", "21-seeds",
+    "29-ecoli", "30-liver-disorders",
+    "32-braziltourism",
+    "39-monks-problems-2", "42-stock",
+    "47-cmc", "49-led7", 
+    "51-iris","52-tic-tac","53-car-evaluation", "28-haberman", "36-threeOf9", 
+    "8-fertility", "19-pwLinear" ,"22-chatfield_4","23-heart-statlog", "41-diabetes",
+    "24-breastTumor","26-cholesterol", "27-cleveland"
 ]
+
+print(len(datasets))
 
 # datasets = [
   
@@ -35,20 +49,23 @@ datasets = [
 param_grid = {
     "alpha": [0.99],  
     "gamma": [0.6],  
-    "apriori": [False],  
-    "feature_train": [False],  
-    "feature_class": [False],  
-    "support_threshold": [0],  
-    "fitness_threshold": [0]
+    "apriori": [True],  
+    "feature_train": [True,False],  
+    "feature_class": [True,False],  
+    "support_threshold": [0.01],  
+    "fitness_threshold": [0.3,0.5,0.7,0.9]
 }
 
-# Generate all combinations of parameters dynamically
+# # Generate all combinations of parameters dynamically
+
+configs = []
+
 configs = [
     dict(zip(param_grid.keys(), values)) 
     for values in product(*param_grid.values())
 ]
 manual = {
-    "alpha": 0.95,
+    "alpha": 0.99,
     "gamma": 0.6,
     "apriori": False,
     "feature_train": False,
@@ -57,7 +74,7 @@ manual = {
     "fitness_threshold": 0
 }
 
-# configs.insert(0,manual)
+configs.insert(0,manual)
 
 # Output Excel file
 output_file = "RACER_ALPHA.xlsx"

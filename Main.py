@@ -48,7 +48,7 @@ for train_index, test_index in kf.split(X):
     racer = RACER(alpha = 0.99, gamma = 0.6, suppress_warnings = True,
             feature_apriori=True,
             feature_class=False, feature_train=True,
-            support_treshhold=0.01, fitness_treshhold=0.50
+            support_treshhold=0.1, fitness_treshhold=0.50
           );
     racer.fit(X_train, Y_train);
     racer.reduceRules();
