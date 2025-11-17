@@ -22,16 +22,7 @@ datasets = [
     "51-iris","52-tic-tac","53-car-evaluation"
 ]
 
-# datasets = [
-  
-#     # "car evaluation",
-#     "Iris",
-#     # "Statlog (Australian Credit Approval)",
-#     "Contraceptive Method Choice",
-#     "tic tac"
-# ]
-
-# Different RACER configurations to test
+# Different A_RACER configurations to test
 param_grid = {
     "alpha": [0.99],  
     "gamma": [0.6],  
@@ -60,7 +51,7 @@ manual = {
 # configs.insert(0,manual)
 
 # Output Excel file
-output_file = "RACER_ALPHA.xlsx"
+output_file = "A_RACER_ALPHA.xlsx"
 
 # If file exists, load previous results to prevent overwriting
 if os.path.exists(output_file):
@@ -75,13 +66,13 @@ for dbName in datasets:
         print(f"\nProcessing dataset: {dbName}...")
 
         # Load ARFF file
-        filePath = f"C:\\Users\\Hkr\\Desktop\\bachelor project\\racerCode\\Racer-Apriori\\data\\{dbName}.arff"
+        filePath = f"Racer-Apriori\\data\\{dbName}.arff"
         data, meta = arff.loadarff(filePath)
         dataTypes = meta.types()
         dataSet = pd.DataFrame(data).values
 
         # Preprocess the dataset
-        preprocessor = RACERPreprocessor()
+        preprocessor = A_RACERPreprocessor()
         X, y = preprocessor.fit_transform(dataSet, dataTypes)
 
         # Cross-validation setup
@@ -107,17 +98,17 @@ for dbName in datasets:
                 Y_train, Y_test = y[train_index], y[test_index]
 
                 # Initialize and train RACER with the current configuration
-                racer = RACER(alpha=alpha, gamma=gamma, suppress_warnings=True,
+                a_racer = A_RACER(alpha=alpha, gamma=gamma, suppress_warnings=True,
                               feature_apriori=feature_apriori,
                               feature_class=feature_class, feature_train=feature_train,
                               support_treshhold=support_threshold, fitness_treshhold=fitness_threshold)
                 
-                aprioriRules = racer.fit(X_train, Y_train)
-                racer.reduceRules()
+                aprioriRules = a_racer.fit(X_train, Y_train)
+                a_racer.reduceRules()
 
                 # Compute accuracy and number of rules
-                score = racer.score(X_test, Y_test)
-                rules = racer.getNumOfRules()
+                score = a_racer.score(X_test, Y_test)
+                rules = a_racer.getNumOfRules()
 
                 total_accuracy += score
                 total_numOfRules += rules

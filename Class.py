@@ -6,7 +6,7 @@ import numpy as np
 from fim import apriori  
 from Discretization import *
 
-class RACERPreprocessor:
+class A_RACERPreprocessor:
     def __init__(self, framework="numpy"):
         assert framework in [
             "numpy",
@@ -69,7 +69,7 @@ def XNOR(input: np.ndarray, other: np.ndarray) -> np.ndarray:
     return NOT(XOR(input, other)).astype(bool)
 
 
-class RACER:
+class A_RACER:
     def __init__(
         self,
         alpha=0.9,
@@ -83,7 +83,7 @@ class RACER:
         feature_class=False,
         feature_apriori=True
     ):
-        """Initialize the RACER class.
+        """Initialize the A_RACER class.
         Args:
             alpha (float, optional): Value of alpha according to the RACER paper. Defaults to 0.9.
             fitness_function (str in ["weighted_average", "f-beta"], optional): Choice of fitness function to use. Defaults to "weighted_average".
@@ -124,8 +124,8 @@ class RACER:
     
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
-        """Fits the RACER algorithm on top of input data X and targets y.
-        The code is written in a way that it is similar to the pseudo-code provided in the RACER paper.
+        """Fits the A_RACER algorithm on top of input data X and targets y.
+        The code is written in a way that it is similar to the pseudo-code provided in the A_RACER paper.
         Args:
             X (np.ndarray): features vector
             y (np.ndarray): targets vector
@@ -309,14 +309,14 @@ class RACER:
     
 
     def predict(self, X: np.ndarray, convert_dummies=True) -> np.ndarray:
-        """Given input X, predict label using RACER
+        """Given input X, predict label using A_RACER
         Args:
             X (np.ndarray): input features vector
             convert_dummies (bool): whether to convert the output to a one-dimensional array
         Returns:
-            np.ndarray: label as predicted by RACER
+            np.ndarray: label as predicted by A_RACER
         """
-        assert self._has_fit, "RACER has not been fit yet."
+        assert self._has_fit, "A_RACER has not been fit yet."
         labels = np.zeros((len(X), self._final_rules_then.shape[1]), dtype=bool)
         found = np.zeros(len(X), dtype=bool)
         for i in range(len(self._final_rules_if)):
@@ -329,7 +329,7 @@ class RACER:
         all_found = found.sum() == len(X)
         if not all_found:
             print(
-                f"Warning: RACER was unable to find a perfect match for {len(X) - found.sum()} instances out of {len(X)}."
+                f"Warning: A_RACER was unable to find a perfect match for {len(X) - found.sum()} instances out of {len(X)}."
             )
             print(
                 "Labels for these instances will be determined by a closest match algorithm."
@@ -345,7 +345,7 @@ class RACER:
 
     def display_rules(self):
         """Print out the final rules"""        
-        assert self._has_fit, "RACER has not been fit yet."
+        assert self._has_fit, "A_RACER has not been fit yet."
         print("Algorithm Parameters:")
         print(f"\t- Fitness Function: {self._fitness_fn_name}")
         print(f"\t- Alpha: {self._alpha}")
@@ -386,7 +386,7 @@ class RACER:
         Returns:
             float: accuracy score
         """
-        assert self._has_fit, "RACER has not been fit yet."
+        assert self._has_fit, "A_RACER has not been fit yet."
         X_test, y_test = X_test.astype(np.float32), y_test.astype(np.float32)
         if y_test.ndim != 1 and y_test.shape[1] != 1:
             y_test = np.argmax(y_test, axis=-1)
@@ -396,12 +396,12 @@ class RACER:
     def _fitness_weighted_avg(
         self, rule_if: np.ndarray, rule_then: np.ndarray
     ) -> float:
-        """Returns fitness for a given rule according to the RACER paper
+        """Returns fitness for a given rule according to the A_RACER paper
         Args:
             rule_if (np.ndarray): if part of a rule (x)
             rule_then (np.ndarray): then part of a rule (y)
         Returns:
-            float: fitness score for the rule as defined in the RACER paper
+            float: fitness score for the rule as defined in the A_RACER paper
         """
 
         n_covered, n_correct = self._confusion(rule_if, rule_then)
@@ -578,7 +578,7 @@ class RACER:
         return len(self._final_rules_if);
 
     def reduceRules(self):
-        assert self._has_fit, "RACER has not been fit yet."
+        assert self._has_fit, "A_RACER has not been fit yet."
         i = 0;
         j = 0;
         while(i < len(self._final_rules_if)-1):
