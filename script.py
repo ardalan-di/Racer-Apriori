@@ -10,16 +10,14 @@ from itertools import product
 
 # List of datasets to process
 datasets = [
-    "1-chscase_vine1", "2-dbworld-bodies", "3-pyrim", "4-kidney", "5-analcatdata_asbestos",
-    "6-baskball", "7-analcatdata_chlamydia", "8-fertility", "9-molecular-biology_promoters",
-    "10-fruitfly", "11-mux6", "12-analcatdata_boxing2", "13-newton_hema", "14-lymph", "15-tae",
-    "16-analcatdata_wildcat", "17-servo", "18-parkinsons", "19-pwLinear", "20-cpu", "21-seeds",
-    "22-chatfield_4", "23-heart-statlog", "24-breastTumor", "25-heart-h", "26-cholesterol",
-    "27-cleveland", "28-haberman", "29-ecoli", "30-liver-disorders", "31-dermatology",
-    "32-braziltourism", "33-pbc", "34-vote", "35-thoracic-surgery", "36-threeOf9", "37-kc2",
-    "38-wdbc", "39-monks-problems-2", "40-eucalyptus", "41-diabetes", "42-stock", "43-tokyo1",
-    "44-xd6", "45-flare", "46-parity5_plus_5", "47-cmc", "48-kr-vs-kp", "49-led7", "50-nursery",
-    "51-iris","52-tic-tac","53-car-evaluation"
+    "1-chscase_vine1", "2-Kidney", "3-analcatdata_asbestos", "4-Baskball", 
+    "5-analcatdata_chlamydia", "6-Fertility", "7-Fruitfly", "8-mux6", 
+    "9-newton_hema", "10-Tae", "11-analcatdata_wildcat", "12-Servo", 
+    "13-Cpu", "14-Seeds", "15-chatfield_4", "16-heart-statlog", 
+    "17-breastTumor", "18-Haberman", "19-Ecoli", "20-liver-disorders", 
+    "21-Braziltourism", "22-threeOf9", "23-Diabetes", "24-Stock", 
+    "25-monks-problems-2", "26-Cmc", "27-Cleveland", "28-led7", 
+    "29-tic-tac-toe", "30-car-evaluation", "31-pwLinear", "32-Cholesterol"
 ]
 
 # Different A_RACER configurations to test
